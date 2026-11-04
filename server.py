@@ -1,17 +1,17 @@
 from flask import Flask, send_from_directory, request, jsonify
+import argparse
 import json
 import os
-import sys
 
 app = Flask(__name__)
 
-# Parse profile argument (kd or sq)
-PROFILE = "kd"  # default
-if len(sys.argv) > 1 and sys.argv[1].lower() in ("kd", "sq"):
-    PROFILE = sys.argv[1].lower()
+def configure(profile):
+    global CONFIG_FILE, VIDEOS_DIR
+    CONFIG_FILE = f"config_{profile}.json"
+    VIDEOS_DIR = f"videos_{profile}"
 
-CONFIG_FILE = f"config_{PROFILE}.json"
-VIDEOS_DIR = f"videos_{PROFILE}"
+
+configure("kd")
 
 @app.route("/")
 def index():
@@ -44,12 +44,10 @@ def list_videos():
     return jsonify(videos)
 
 if __name__ == "__main__":
-    if not os.path.exists(VIDEOS_DIR):
-        os.makedirs(VIDEOS_DIR)
-    print("=" * 50)
-    print(f"Photo Wall Video Server [{PROFILE.upper()}]")
-    print("=" * 50)
-    print(f"Profile: {PROFILE} | Videos: {VIDEOS_DIR} | Config: {CONFIG_FILE}")
-    print("Open http://localhost:5000 in your browser")
-    print("=" * 50)
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    parser = argparse.ArgumentParser(description="Run the portrait wall display.")
+    parser.add_argument("profile", nargs="?", choices=("kd", "sq"), default="kd", type=str.lower)
+    parser.add_argument("--host", default="127.0.0.1")
+    args = parser.parse_args()
+    configure(args.profile)
+    os.makedirs(VIDEOS_DIR, exist_ok=True)
+    app.run(host=args.host, port=5000)
