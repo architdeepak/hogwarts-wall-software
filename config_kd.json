@@ -1,0 +1,212 @@
+{
+  "frames": [
+    {
+      "height": 1114,
+      "id": 0,
+      "video": "horz_addu_bday.mp4",
+      "videoOffsetX": -13,
+      "videoOffsetY": 33,
+      "videoZoom": 196,
+      "visible": true,
+      "width": 1080,
+      "x": 320,
+      "y": 300
+    },
+    {
+      "height": 300,
+      "id": 1,
+      "video": "vert_bday.mp4",
+      "videoOffsetX": -7,
+      "videoOffsetY": 6,
+      "videoZoom": 193,
+      "visible": true,
+      "width": 200,
+      "x": 1830,
+      "y": 870
+    },
+    {
+      "height": 998,
+      "id": 2,
+      "video": "vert_peru.mp4",
+      "videoOffsetX": 2,
+      "videoOffsetY": 9,
+      "videoZoom": 155,
+      "visible": true,
+      "width": 792,
+      "x": 2520,
+      "y": 736
+    },
+    {
+      "height": 325,
+      "id": 3,
+      "video": "horz_car_india.mp4",
+      "videoOffsetX": -23,
+      "videoOffsetY": 1,
+      "videoZoom": 149,
+      "visible": true,
+      "width": 440,
+      "x": 3917,
+      "y": 321
+    },
+    {
+      "height": 627,
+      "id": 4,
+      "video": "vert_cake_cut.mp4",
+      "videoOffsetX": 1,
+      "videoOffsetY": 15,
+      "videoZoom": 129,
+      "visible": true,
+      "width": 394,
+      "x": 5316,
+      "y": 256
+    },
+    {
+      "height": 830,
+      "id": 5,
+      "video": "horz_bumper.mp4",
+      "videoOffsetX": 3,
+      "videoOffsetY": -6,
+      "videoZoom": 175,
+      "visible": true,
+      "width": 1030,
+      "x": 6342,
+      "y": 292
+    },
+    {
+      "height": 720,
+      "id": 6,
+      "video": "vert_house_explain.mp4",
+      "videoOffsetX": 11,
+      "videoOffsetY": 20,
+      "videoZoom": 147,
+      "visible": true,
+      "width": 515,
+      "x": 460,
+      "y": 1880
+    },
+    {
+      "height": 500,
+      "id": 7,
+      "video": "horz_beach_castle.mp4",
+      "videoOffsetX": 8,
+      "videoOffsetY": 21,
+      "videoZoom": 163,
+      "visible": true,
+      "width": 750,
+      "x": 1450,
+      "y": 1915
+    },
+    {
+      "height": 700,
+      "id": 8,
+      "video": "vert_prank_call.mp4",
+      "videoOffsetX": -5,
+      "videoOffsetY": 14,
+      "videoZoom": 138,
+      "visible": true,
+      "width": 475,
+      "x": 2900,
+      "y": 2250
+    },
+    {
+      "height": 510,
+      "id": 9,
+      "video": "horz_lay_tree.mp4",
+      "videoOffsetX": 1,
+      "videoOffsetY": 14,
+      "videoZoom": 153,
+      "visible": true,
+      "width": 720,
+      "x": 4030,
+      "y": 1110
+    },
+    {
+      "height": 390,
+      "id": 10,
+      "video": "horz_india_bday.mp4",
+      "videoOffsetX": -3,
+      "videoOffsetY": 0,
+      "videoZoom": 300,
+      "visible": true,
+      "width": 580,
+      "x": 3996,
+      "y": 2184
+    },
+    {
+      "height": 1000,
+      "id": 11,
+      "video": "vert_yoga.mp4",
+      "videoOffsetX": -6,
+      "videoOffsetY": 28,
+      "videoZoom": 158,
+      "visible": true,
+      "width": 800,
+      "x": 5260,
+      "y": 1260
+    },
+    {
+      "height": 480,
+      "id": 12,
+      "video": "horz_archi_priest.mp4",
+      "videoOffsetX": 5,
+      "videoOffsetY": -1,
+      "videoZoom": 121,
+      "visible": true,
+      "width": 700,
+      "x": 6665,
+      "y": 1620
+    },
+    {
+      "height": 1100,
+      "id": 13,
+      "video": "horz_water_archi.mp4",
+      "videoOffsetX": 14,
+      "videoOffsetY": 59,
+      "videoZoom": 152,
+      "visible": true,
+      "width": 2075,
+      "x": 344,
+      "y": 3028
+    },
+    {
+      "height": 700,
+      "id": 14,
+      "video": "horz_wrestle.mp4",
+      "videoOffsetX": 8,
+      "videoOffsetY": 15,
+      "videoZoom": 191,
+      "visible": true,
+      "width": 795,
+      "x": 2884,
+      "y": 3394
+    },
+    {
+      "height": 850,
+      "id": 15,
+      "video": "horz_wrestle_again.mp4",
+      "videoOffsetX": 8,
+      "videoOffsetY": -13,
+      "videoZoom": 177,
+      "visible": true,
+      "width": 1014,
+      "x": 4250,
+      "y": 3153
+    },
+    {
+      "height": 1500,
+      "id": 16,
+      "video": "horz_pinata.mp4",
+      "videoOffsetX": -38,
+      "videoOffsetY": -57,
+      "videoZoom": 248,
+      "visible": true,
+      "width": 1500,
+      "x": 5915,
+      "y": 2630
+    }
+  ],
+  "resolution": {
+    "height": 4320,
+    "width": 7680
+  }
+}

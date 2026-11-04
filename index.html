@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Wall Video Display</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        #canvas {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+        }
+
+        .video-frame {
+            position: absolute;
+            overflow: hidden;
+        }
+
+        .video-frame video {
+            position: absolute;
+            transform-origin: center center;
+            cursor: grab;
+        }
+
+        .video-frame video:active {
+            cursor: grabbing;
+        }
+
+        /* Debug mode styles */
+        .debug .video-frame {
+            border: 2px solid #0f0;
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .video-frame .frame-label {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #0f0;
+            text-shadow: 2px 2px 4px #000;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .debug .video-frame .frame-label {
+            display: block;
+        }
+
+        .video-frame .key-label {
+            position: absolute;
+            bottom: 3px;
+            right: 3px;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 5px;
+            border-radius: 3px;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0.5;
+        }
+
+        .video-frame .key-label.audio-active {
+            background: rgba(0, 200, 0, 0.9);
+            opacity: 1;
+        }
+
+        .debug .video-frame .key-label {
+            opacity: 1;
+        }
+
+        /* Grid overlay */
+        #grid-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .debug #grid-overlay {
+            display: block;
+        }
+
+        .grid-line-h, .grid-line-v {
+            position: absolute;
+            background: rgba(255, 255, 0, 0.3);
+        }
+
+        .grid-line-h {
+            width: 100%;
+            height: 1px;
+        }
+
+        .grid-line-v {
+            width: 1px;
+            height: 100%;
+        }
+
+        .grid-label {
+            position: absolute;
+            color: yellow;
+            font-size: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 1px 3px;
+        }
+
+        #cursor-coords {
+            display: none;
+            position: fixed;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.85);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #0f0;
+            z-index: 3000;
+            white-space: nowrap;
+        }
+
+        .debug #cursor-coords {
+            display: block;
+        }
+
+        /* Control panel */
+        #controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(30, 30, 30, 0.95);
+            padding: 15px;
+            border-radius: 8px;
+            color: #fff;
+            z-index: 2000;
+            max-height: 90vh;
+            overflow-y: auto;
+            min-width: 320px;
+            font-size: 12px;
+        }
+
+        #controls.hidden {
+            display: none;
+        }
+
+        #controls h3 {
+            margin-bottom: 10px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(50, 50, 50, 0.8);
+            border-radius: 4px;
+        }
+
+        .control-group label {
+            display: inline-block;
+            width: 60px;
+            margin-right: 5px;
+        }
+
+        .control-group input[type="number"] {
+            width: 70px;
+            padding: 3px;
+            background: #222;
+            border: 1px solid #555;
+            color: #fff;
+            border-radius: 3px;
+        }
+
+        .control-group select {
+            width: 100%;
+            padding: 5px;
+            background: #222;
+            border: 1px solid #555;
+            color: #fff;
+            border-radius: 3px;
+            margin-bottom: 8px;
+        }
+
+        .control-row {
+            margin-bottom: 5px;
+        }
+
+        .control-section {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #444;
+        }
+
+        .control-section-title {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100px;
+            vertical-align: middle;
+        }
+
+        .small-label {
+            display: inline-block;
+            width: 45px;
+            font-size: 11px;
+        }
+
+        button {
+            padding: 8px 15px;
+            margin: 3px;
+            background: #444;
+            border: none;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #666;
+        }
+
+        button.active {
+            background: #0a0;
+        }
+
+        .frame-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .frame-title {
+            font-weight: bold;
+            color: #0f0;
+        }
+
+        .visibility-toggle {
+            cursor: pointer;
+        }
+
+        #toggle-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 2001;
+            background: #333;
+            padding: 10px 15px;
+        }
+
+        #resolution-inputs {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(50, 50, 50, 0.8);
+            border-radius: 4px;
+        }
+
+        #resolution-inputs input {
+            width: 80px;
+            padding: 3px;
+            background: #222;
+            border: 1px solid #555;
+            color: #fff;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas">
+        <div id="grid-overlay"></div>
+        <div id="cursor-coords">X: 0, Y: 0</div>
+    </div>
+
+    <button id="toggle-controls">☰ Controls (C)</button>
+
+    <div id="controls">
+        <h3>Video Wall Controls</h3>
+        
+        <div id="resolution-inputs">
+            <strong>Target Resolution:</strong><br>
+            <label>W:</label><input type="number" id="res-width" value="3840">
+            <label>H:</label><input type="number" id="res-height" value="2160">
+            <button onclick="updateResolution()">Apply</button>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <button id="debug-toggle" onclick="toggleDebug()">Debug Mode: OFF</button>
+            <button onclick="saveConfig()">💾 Save</button>
+            <button onclick="loadConfig()">📂 Load</button>
+        </div>
+
+        <div id="frame-controls"></div>
+    </div>
+
+    <script>
+        const NUM_FRAMES = 17;
+        const GRID_SPACING = 100;
+        
+        let config = {
+            resolution: { width: 3840, height: 2160 },
+            frames: []
+        };
+        
+        let debugMode = false;
+        let availableVideos = [];
+
+        // Initialize frames
+        function initFrames() {
+            const canvas = document.getElementById('canvas');
+            const controlsContainer = document.getElementById('frame-controls');
+            
+            for (let i = 0; i < NUM_FRAMES; i++) {
+                // Default layout: 5 columns, 3 rows
+                const col = i % 5;
+                const row = Math.floor(i / 5);
+                const defaultWidth = config.resolution.width / 5;
+                const defaultHeight = config.resolution.height / 3;
+                
+                config.frames.push({
+                    id: i,
+                    x: col * defaultWidth,
+                    y: row * defaultHeight,
+                    width: defaultWidth,
+                    height: defaultHeight,
+                    video: "",
+                    visible: true,
+                    videoOffsetX: 0,
+                    videoOffsetY: 0,
+                    videoZoom: 100
+                });
+                
+                // Create video frame element
+                const frame = document.createElement('div');
+                frame.className = 'video-frame';
+                frame.id = `frame-${i}`;
+                const keyLetter = String.fromCharCode(65 + i); // A, B, C, ...
+                frame.innerHTML = `
+                    <div class="frame-label">${i + 1}</div>
+                    <div class="key-label">${keyLetter}</div>
+                    <video muted loop playsinline preload="metadata" disablepictureinpicture></video>
+                `;
+                canvas.appendChild(frame);
+                
+                // Create control panel for this frame
+                const control = document.createElement('div');
+                control.className = 'control-group';
+                control.id = `control-${i}`;
+                control.innerHTML = `
+                    <div class="frame-header">
+                        <span class="frame-title">Frame ${i + 1}</span>
+                        <label class="visibility-toggle">
+                            <input type="checkbox" checked onchange="toggleFrameVisibility(${i}, this.checked)"> Show
+                        </label>
+                    </div>
+                    <div class="control-row">
+                        <select onchange="setVideo(${i}, this.value)">
+                            <option value="">-- No Video --</option>
+                        </select>
+                    </div>
+                    <div class="control-row">
+                        <label>X:</label><input type="number" id="x-${i}" value="${config.frames[i].x}" onchange="updateFrame(${i})">
+                        <label>Y:</label><input type="number" id="y-${i}" value="${config.frames[i].y}" onchange="updateFrame(${i})">
+                    </div>
+                    <div class="control-row">
+                        <label>W:</label><input type="number" id="w-${i}" value="${config.frames[i].width}" onchange="updateFrame(${i})">
+                        <label>H:</label><input type="number" id="h-${i}" value="${config.frames[i].height}" onchange="updateFrame(${i})">
+                    </div>
+                    <div class="control-section">
+                        <div class="control-section-title">Video Crop (drag video or use controls)</div>
+                        <div class="control-row">
+                            <label class="small-label">Pan X:</label><input type="number" id="vx-${i}" value="0" onchange="updateVideoOffset(${i})" style="width:50px">
+                            <label class="small-label">Pan Y:</label><input type="number" id="vy-${i}" value="0" onchange="updateVideoOffset(${i})" style="width:50px">
+                        </div>
+                        <div class="control-row">
+                            <label class="small-label">Zoom:</label>
+                            <input type="range" id="vz-${i}" min="50" max="300" value="100" onchange="updateVideoOffset(${i})">
+                            <span id="vz-label-${i}">100%</span>
+                        </div>
+                        <button onclick="resetVideoCrop(${i})" style="padding:4px 8px;font-size:10px">Reset Crop</button>
+                    </div>
+                `;
+                controlsContainer.appendChild(control);
+            }
+            
+            updateAllFrames();
+            loadVideoList();
+        }
+
+        function loadVideoList() {
+            fetch('/list-videos')
+                .then(r => r.json())
+                .then(videos => {
+                    availableVideos = videos;
+                    updateVideoSelects();
+                });
+        }
+
+        function updateVideoSelects() {
+            for (let i = 0; i < NUM_FRAMES; i++) {
+                const select = document.querySelector(`#control-${i} select`);
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">-- No Video --</option>';
+                availableVideos.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v;
+                    opt.textContent = v;
+                    if (v === config.frames[i].video) opt.selected = true;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        function setVideo(frameIndex, videoName) {
+            config.frames[frameIndex].video = videoName;
+            const video = document.querySelector(`#frame-${frameIndex} video`);
+            if (videoName) {
+                video.src = `/videos/${videoName}`;
+                video.load();
+                video.play().catch(e => console.log('Autoplay blocked, user interaction needed'));
+            } else {
+                video.src = '';
+            }
+        }
+
+        function updateFrame(frameIndex) {
+            const f = config.frames[frameIndex];
+            f.x = parseFloat(document.getElementById(`x-${frameIndex}`).value) || 0;
+            f.y = parseFloat(document.getElementById(`y-${frameIndex}`).value) || 0;
+            f.width = parseFloat(document.getElementById(`w-${frameIndex}`).value) || 100;
+            f.height = parseFloat(document.getElementById(`h-${frameIndex}`).value) || 100;
+            applyFrameStyle(frameIndex);
+        }
+
+        function applyFrameStyle(frameIndex) {
+            const f = config.frames[frameIndex];
+            const frame = document.getElementById(`frame-${frameIndex}`);
+            const video = frame.querySelector('video');
+            const scaleX = window.innerWidth / config.resolution.width;
+            const scaleY = window.innerHeight / config.resolution.height;
+            
+            frame.style.left = (f.x * scaleX) + 'px';
+            frame.style.top = (f.y * scaleY) + 'px';
+            frame.style.width = (f.width * scaleX) + 'px';
+            frame.style.height = (f.height * scaleY) + 'px';
+            frame.style.display = f.visible ? 'block' : 'none';
+            
+            // Apply video offset and zoom
+            const zoom = (f.videoZoom || 100) / 100;
+            const offsetX = f.videoOffsetX || 0;
+            const offsetY = f.videoOffsetY || 0;
+            
+            // Size video to cover the frame, then apply zoom
+            video.style.width = (100 * zoom) + '%';
+            video.style.height = (100 * zoom) + '%';
+            video.style.left = `calc(50% + ${offsetX}px)`;
+            video.style.top = `calc(50% + ${offsetY}px)`;
+            video.style.transform = `translate(-50%, -50%)`;
+        }
+
+        function updateVideoOffset(frameIndex) {
+            const f = config.frames[frameIndex];
+            f.videoOffsetX = parseFloat(document.getElementById(`vx-${frameIndex}`).value) || 0;
+            f.videoOffsetY = parseFloat(document.getElementById(`vy-${frameIndex}`).value) || 0;
+            f.videoZoom = parseFloat(document.getElementById(`vz-${frameIndex}`).value) || 100;
+            document.getElementById(`vz-label-${frameIndex}`).textContent = f.videoZoom + '%';
+            applyFrameStyle(frameIndex);
+        }
+
+        function resetVideoCrop(frameIndex) {
+            config.frames[frameIndex].videoOffsetX = 0;
+            config.frames[frameIndex].videoOffsetY = 0;
+            config.frames[frameIndex].videoZoom = 100;
+            document.getElementById(`vx-${frameIndex}`).value = 0;
+            document.getElementById(`vy-${frameIndex}`).value = 0;
+            document.getElementById(`vz-${frameIndex}`).value = 100;
+            document.getElementById(`vz-label-${frameIndex}`).textContent = '100%';
+            applyFrameStyle(frameIndex);
+        }
+
+        // Drag video within frame
+        let dragState = null;
+
+        function initVideoDrag() {
+            document.querySelectorAll('.video-frame video').forEach((video, frameIndex) => {
+                video.addEventListener('mousedown', (e) => {
+                    if (!debugMode) return; // Only allow dragging in debug mode
+                    e.preventDefault();
+                    dragState = {
+                        frameIndex,
+                        startX: e.clientX,
+                        startY: e.clientY,
+                        origOffsetX: config.frames[frameIndex].videoOffsetX || 0,
+                        origOffsetY: config.frames[frameIndex].videoOffsetY || 0
+                    };
+                });
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!dragState) return;
+                const dx = e.clientX - dragState.startX;
+                const dy = e.clientY - dragState.startY;
+                const f = config.frames[dragState.frameIndex];
+                f.videoOffsetX = dragState.origOffsetX + dx;
+                f.videoOffsetY = dragState.origOffsetY + dy;
+                document.getElementById(`vx-${dragState.frameIndex}`).value = Math.round(f.videoOffsetX);
+                document.getElementById(`vy-${dragState.frameIndex}`).value = Math.round(f.videoOffsetY);
+                applyFrameStyle(dragState.frameIndex);
+            });
+
+            document.addEventListener('mouseup', () => {
+                dragState = null;
+            });
+        }
+
+        function updateAllFrames() {
+            for (let i = 0; i < NUM_FRAMES; i++) {
+                applyFrameStyle(i);
+            }
+            updateGrid();
+        }
+
+        function toggleFrameVisibility(frameIndex, visible) {
+            config.frames[frameIndex].visible = visible;
+            applyFrameStyle(frameIndex);
+        }
+
+        function toggleDebug() {
+            debugMode = !debugMode;
+            document.getElementById('canvas').classList.toggle('debug', debugMode);
+            document.getElementById('debug-toggle').textContent = `Debug Mode: ${debugMode ? 'ON' : 'OFF'}`;
+            document.getElementById('debug-toggle').classList.toggle('active', debugMode);
+        }
+
+        function updateGrid() {
+            const overlay = document.getElementById('grid-overlay');
+            overlay.innerHTML = '';
+            
+            const scaleX = window.innerWidth / config.resolution.width;
+            const scaleY = window.innerHeight / config.resolution.height;
+            
+            // Horizontal lines
+            for (let y = 0; y <= config.resolution.height; y += GRID_SPACING) {
+                const line = document.createElement('div');
+                line.className = 'grid-line-h';
+                line.style.top = (y * scaleY) + 'px';
+                overlay.appendChild(line);
+                
+                if (y % 200 === 0) {
+                    const label = document.createElement('div');
+                    label.className = 'grid-label';
+                    label.style.top = (y * scaleY) + 'px';
+                    label.style.left = '5px';
+                    label.textContent = y;
+                    overlay.appendChild(label);
+                }
+            }
+            
+            // Vertical lines
+            for (let x = 0; x <= config.resolution.width; x += GRID_SPACING) {
+                const line = document.createElement('div');
+                line.className = 'grid-line-v';
+                line.style.left = (x * scaleX) + 'px';
+                overlay.appendChild(line);
+                
+                if (x % 200 === 0) {
+                    const label = document.createElement('div');
+                    label.className = 'grid-label';
+                    label.style.left = (x * scaleX) + 'px';
+                    label.style.top = '5px';
+                    label.textContent = x;
+                    overlay.appendChild(label);
+                }
+            }
+        }
+
+        function updateResolution() {
+            config.resolution.width = parseInt(document.getElementById('res-width').value) || 3840;
+            config.resolution.height = parseInt(document.getElementById('res-height').value) || 2160;
+            updateAllFrames();
+        }
+
+        function saveConfig() {
+            fetch('/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            }).then(() => alert('Configuration saved!'));
+        }
+
+        function loadConfig() {
+            fetch('/config')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.frames && data.frames.length > 0) {
+                        config = data;
+                        document.getElementById('res-width').value = config.resolution.width;
+                        document.getElementById('res-height').value = config.resolution.height;
+                        
+                        for (let i = 0; i < NUM_FRAMES && i < config.frames.length; i++) {
+                            const f = config.frames[i];
+                            document.getElementById(`x-${i}`).value = f.x;
+                            document.getElementById(`y-${i}`).value = f.y;
+                            document.getElementById(`w-${i}`).value = f.width;
+                            document.getElementById(`h-${i}`).value = f.height;
+                            
+                            const checkbox = document.querySelector(`#control-${i} input[type="checkbox"]`);
+                            checkbox.checked = f.visible !== false;
+                            
+                            // Load video crop settings
+                            document.getElementById(`vx-${i}`).value = f.videoOffsetX || 0;
+                            document.getElementById(`vy-${i}`).value = f.videoOffsetY || 0;
+                            document.getElementById(`vz-${i}`).value = f.videoZoom || 100;
+                            document.getElementById(`vz-label-${i}`).textContent = (f.videoZoom || 100) + '%';
+                            
+                            if (f.video) {
+                                setVideo(i, f.video);
+                            }
+                        }
+                        updateVideoSelects();
+                        updateAllFrames();
+                    }
+                });
+        }
+
+        // Toggle controls visibility
+        document.getElementById('toggle-controls').addEventListener('click', () => {
+            document.getElementById('controls').classList.toggle('hidden');
+        });
+
+        // Audio control functions
+        function unmuteFrame(frameIndex) {
+            // Mute all first
+            muteAllFrames();
+            // Unmute the selected frame
+            const video = document.querySelector(`#frame-${frameIndex} video`);
+            const keyLabel = document.querySelector(`#frame-${frameIndex} .key-label`);
+            if (video && video.src) {
+                video.muted = false;
+                if (keyLabel) keyLabel.classList.add('audio-active');
+                console.log(`Audio ON for frame ${frameIndex + 1} (${String.fromCharCode(65 + frameIndex)})`);
+            }
+        }
+
+        function muteAllFrames() {
+            document.querySelectorAll('.video-frame video').forEach(v => v.muted = true);
+            document.querySelectorAll('.key-label').forEach(k => k.classList.remove('audio-active'));
+            console.log('All audio muted');
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Number keys for controls: 1=debug, 2=controls, 3=fullscreen
+            if (e.key === '1') {
+                toggleDebug();
+            }
+            if (e.key === '2') {
+                document.getElementById('controls').classList.toggle('hidden');
+            }
+            if (e.key === '3') {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+            
+            // 0 = mute all
+            if (e.key === '0') {
+                muteAllFrames();
+            }
+            
+            // Letter keys A-Q for unmuting frames 0-16
+            const key = e.key.toUpperCase();
+            const letterIndex = key.charCodeAt(0) - 65; // A=0, B=1, etc.
+            if (letterIndex >= 0 && letterIndex < NUM_FRAMES && key.length === 1 && key >= 'A' && key <= 'Q') {
+                unmuteFrame(letterIndex);
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', updateAllFrames);
+
+        // Cursor coordinate tracking
+        document.addEventListener('mousemove', (e) => {
+            if (!debugMode) return;
+            const coords = document.getElementById('cursor-coords');
+            const scaleX = config.resolution.width / window.innerWidth;
+            const scaleY = config.resolution.height / window.innerHeight;
+            const x = Math.round(e.clientX * scaleX);
+            const y = Math.round(e.clientY * scaleY);
+            coords.textContent = `X: ${x}, Y: ${y}`;
+            coords.style.left = (e.clientX + 15) + 'px';
+            coords.style.top = (e.clientY + 15) + 'px';
+        });
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            initFrames();
+            initVideoDrag();
+            loadConfig();
+        });
+
+        // Play all videos on user interaction (for autoplay policy)
+        document.addEventListener('click', () => {
+            document.querySelectorAll('video').forEach(v => {
+                if (v.src && v.paused) v.play().catch(() => {});
+            });
+        }, { once: true });
+    </script>
+</body>
+</html>
